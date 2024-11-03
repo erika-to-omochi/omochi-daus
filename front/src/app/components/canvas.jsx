@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Rect as KonvaRect, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import { v4 as uuidv4 } from 'uuid';
-import Footer from './Footer'; // Footerコンポーネントのインポート
-import PropTypes from 'prop-types';
 
 // カラーピッカーコンポーネント
 const ColorPicker = ({ label, color, onChange, onReset }) => (
@@ -536,8 +534,7 @@ export default function Component() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
+    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-pink-50 to-cyan-50 relative">
       <header className="flex justify-between items-center p-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" className="text-purple-900">
@@ -575,9 +572,7 @@ export default function Component() {
         </nav>
       </header>
 
-      {/* Main Content */}
-      <div className="flex flex-grow">
-        {/* Main Canvas */}
+      <div className="flex h-[calc(100vh-8rem)]">
         <main className="flex-grow flex justify-center items-center p-4">
           <div className="w-full max-w-4xl aspect-[4/3] bg-white rounded-lg shadow-sm overflow-hidden relative">
             {isClient && (
@@ -651,7 +646,6 @@ export default function Component() {
           </div>
         </main>
 
-        {/* Sidebar */}
         <aside className="w-64 p-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -669,7 +663,7 @@ export default function Component() {
                       label="背景色"
                       color={backgroundColor}
                       onChange={setBackgroundColor}
-                      onReset={() => setBackgroundColor("#ffffff")}
+                      onReset={resetBackgroundColor}
                     />
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
@@ -697,17 +691,49 @@ export default function Component() {
         </aside>
       </div>
 
-      {/* Footer */}
-      <Footer
-        handleUndo={handleUndo}
-        handleBan={handleBan}
-        handleAddElement={handleAddElement}
-        handleBackgroundChange={handleBackgroundChange}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        handlePrevPage={handlePrevPage}
-        handleNextPage={handleNextPage}
-      />
+      {/* Bottom Controls */}
+      <footer className="flex justify-center">
+        <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleUndo}>
+              <Undo2 className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => {
+              if (selectedId) {
+                addHistory(elements.filter(el => el.id !== selectedId));
+                setSelectedId(null);
+              }
+            }}>
+              <Ban className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="h-6 w-px bg-purple-200" />
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}>
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <span className="text-purple-900 min-w-[3ch] text-center">
+              {currentPage}/{totalPages}
+            </span>
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}>
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="h-6 w-px bg-purple-200" />
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleAddElement}>
+              <Plus className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleBackgroundChange}>
+              <Palette className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
