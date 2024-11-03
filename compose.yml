@@ -32,6 +32,6 @@ services:
       - ./front:/app
     command: yarn dev -p 4000
     ports:
-      - "8000:4000"
+      - "4000:4000"
 volumes:
   postgres_data:
