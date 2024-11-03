@@ -35,16 +35,14 @@ const TextInputForm = ({ onSubmit }) => {
   const [text, setText] = useState("");
   const [fontSize, setFontSize] = useState(20);
   const [color, setColor] = useState("#000000");
-  const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim() === "") return;
-    onSubmit({ text, fontSize, color, fontFamily });
+    onSubmit({ text, fontSize, color });
     setText("");
     setFontSize(20);
     setColor("#000000");
-    setFontFamily("Arial, sans-serif");
   };
 
   return (
@@ -69,20 +67,6 @@ const TextInputForm = ({ onSubmit }) => {
           min="5"
           required
         />
-      </label>
-      <label className="flex flex-col">
-        フォントファミリー:
-        <select
-          value={fontFamily}
-          onChange={(e) => setFontFamily(e.target.value)}
-          className="mt-1 p-2 border border-gray-300 rounded"
-          required
-        >
-          <option value="Arial, sans-serif">Arial</option>
-          <option value="'Times New Roman', serif">Times New Roman</option>
-          <option value="'Courier New', monospace">Courier New</option>
-          {/* 必要に応じて追加 */}
-        </select>
       </label>
       <label className="flex flex-col">
         色:
@@ -377,7 +361,7 @@ export default function Component() {
     }
   };
 
-  const handleAddCustomText = ({ text, fontSize, color, fontFamily }) => {
+  const handleAddCustomText = ({ text, fontSize, color }) => {
     const newText = {
       id: uuidv4(),
       type: 'text',
@@ -387,7 +371,7 @@ export default function Component() {
       rotation: 0,
       fontSize,
       fill: color,
-      fontFamily
+      fontFamily: "Arial, sans-serif" // フォントファミリーをデフォルト設定
     };
 
     addHistory([...elements, newText]);
@@ -410,11 +394,14 @@ export default function Component() {
       return;
     }
     // クリックした要素を選択
-    const clickedElement = e.target.attrs.id;
-    if (clickedElement) {
-      setSelectedId(clickedElement);
-    } else {
+    const clickedOnEmpty = e.target === e.target.getStage();
+    if (clickedOnEmpty) {
       setSelectedId(null);
+    } else {
+      const clickedElement = e.target.attrs.id;
+      if (clickedElement) {
+        setSelectedId(clickedElement);
+      }
     }
   };
 
@@ -516,21 +503,9 @@ export default function Component() {
     }
   };
 
-  // フッターのBanボタン用ハンドラー（選択された要素を削除）
-  const handleBan = () => {
-    if (selectedId) {
-      addHistory(elements.filter(el => el.id !== selectedId));
-      setSelectedId(null);
-    }
-  };
-
-  // ページネーション用ハンドラー
-  const handlePrevPage = () => {
-    setCurrentPage(Math.max(currentPage - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage(Math.min(currentPage + 1, totalPages));
+  // 背景色リセットハンドラー
+  const resetBackgroundColor = () => {
+    setBackgroundColor("#ffffff"); // デフォルトの色にリセット
   };
 
   return (
