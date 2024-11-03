@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Rect as KonvaRect, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import { v4 as uuidv4 } from 'uuid';
+import Footer from './Footer'; // Footerコンポーネントのインポート
+import PropTypes from 'prop-types';
 
 // カラーピッカーコンポーネント
 const ColorPicker = ({ label, color, onChange, onReset }) => (
@@ -35,14 +37,16 @@ const TextInputForm = ({ onSubmit }) => {
   const [text, setText] = useState("");
   const [fontSize, setFontSize] = useState(20);
   const [color, setColor] = useState("#000000");
+  const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim() === "") return;
-    onSubmit({ text, fontSize, color });
+    onSubmit({ text, fontSize, color, fontFamily });
     setText("");
     setFontSize(20);
     setColor("#000000");
+    setFontFamily("Arial, sans-serif");
   };
 
   return (
@@ -67,6 +71,20 @@ const TextInputForm = ({ onSubmit }) => {
           min="5"
           required
         />
+      </label>
+      <label className="flex flex-col">
+        フォントファミリー:
+        <select
+          value={fontFamily}
+          onChange={(e) => setFontFamily(e.target.value)}
+          className="mt-1 p-2 border border-gray-300 rounded"
+          required
+        >
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          {/* 必要に応じて追加 */}
+        </select>
       </label>
       <label className="flex flex-col">
         色:
@@ -361,7 +379,7 @@ export default function Component() {
     }
   };
 
-  const handleAddCustomText = ({ text, fontSize, color }) => {
+  const handleAddCustomText = ({ text, fontSize, color, fontFamily }) => {
     const newText = {
       id: uuidv4(),
       type: 'text',
@@ -371,7 +389,7 @@ export default function Component() {
       rotation: 0,
       fontSize,
       fill: color,
-      fontFamily: "Arial, sans-serif" // フォントファミリーをデフォルト設定
+      fontFamily
     };
 
     addHistory([...elements, newText]);
@@ -394,14 +412,11 @@ export default function Component() {
       return;
     }
     // クリックした要素を選択
-    const clickedOnEmpty = e.target === e.target.getStage();
-    if (clickedOnEmpty) {
-      setSelectedId(null);
+    const clickedElement = e.target.attrs.id;
+    if (clickedElement) {
+      setSelectedId(clickedElement);
     } else {
-      const clickedElement = e.target.attrs.id;
-      if (clickedElement) {
-        setSelectedId(clickedElement);
-      }
+      setSelectedId(null);
     }
   };
 
@@ -503,13 +518,26 @@ export default function Component() {
     }
   };
 
-  // 背景色リセットハンドラー
-  const resetBackgroundColor = () => {
-    setBackgroundColor("#ffffff"); // デフォルトの色にリセット
+  // フッターのBanボタン用ハンドラー（選択された要素を削除）
+  const handleBan = () => {
+    if (selectedId) {
+      addHistory(elements.filter(el => el.id !== selectedId));
+      setSelectedId(null);
+    }
+  };
+
+  // ページネーション用ハンドラー
+  const handlePrevPage = () => {
+    setCurrentPage(Math.max(currentPage - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(Math.min(currentPage + 1, totalPages));
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-pink-50 to-cyan-50 relative">
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
       <header className="flex justify-between items-center p-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" className="text-purple-900">
@@ -547,7 +575,9 @@ export default function Component() {
         </nav>
       </header>
 
-      <div className="flex h-[calc(100vh-8rem)]">
+      {/* Main Content */}
+      <div className="flex flex-grow">
+        {/* Main Canvas */}
         <main className="flex-grow flex justify-center items-center p-4">
           <div className="w-full max-w-4xl aspect-[4/3] bg-white rounded-lg shadow-sm overflow-hidden relative">
             {isClient && (
@@ -621,6 +651,7 @@ export default function Component() {
           </div>
         </main>
 
+        {/* Sidebar */}
         <aside className="w-64 p-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -638,7 +669,7 @@ export default function Component() {
                       label="背景色"
                       color={backgroundColor}
                       onChange={setBackgroundColor}
-                      onReset={resetBackgroundColor}
+                      onReset={() => setBackgroundColor("#ffffff")}
                     />
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
@@ -666,49 +697,17 @@ export default function Component() {
         </aside>
       </div>
 
-      {/* Bottom Controls */}
-      <footer className="flex justify-center">
-        <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleUndo}>
-              <Undo2 className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => {
-              if (selectedId) {
-                addHistory(elements.filter(el => el.id !== selectedId));
-                setSelectedId(null);
-              }
-            }}>
-              <Ban className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="h-6 w-px bg-purple-200" />
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <span className="text-purple-900 min-w-[3ch] text-center">
-              {currentPage}/{totalPages}
-            </span>
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}>
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="h-6 w-px bg-purple-200" />
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleAddElement}>
-              <Plus className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-purple-900" onClick={handleBackgroundChange}>
-              <Palette className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer
+        handleUndo={handleUndo}
+        handleBan={handleBan}
+        handleAddElement={handleAddElement}
+        handleBackgroundChange={handleBackgroundChange}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        handlePrevPage={handlePrevPage}
+        handleNextPage={handleNextPage}
+      />
     </div>
   );
 }
